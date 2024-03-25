@@ -194,7 +194,7 @@ with tab2:
         st.markdown("#### Stock Performance Prediction by Quarter")
         st.markdown("*Note: The red point in the following graph is the prediction based on model.*")
 
-        stock_price_quarter = yf.download(ticker_list, start="2003-01-01", end = '2023-12-31',interval="3mo")
+        stock_price_quarter = yf.download(ticker_list, start="2019-01-01", end = '2023-12-31',interval="3mo")
         close_stock_price_quarter = stock_price_quarter["Close"]
         close_stock_price_quarter = close_stock_price_quarter.reset_index(drop=False)
 
