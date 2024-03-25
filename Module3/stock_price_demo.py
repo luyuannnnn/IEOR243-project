@@ -18,13 +18,13 @@ target_ciks = [320193, 789019, 1018724, 66740, 766704, 1067983, 200406, 1800, 10
 cik_df['CIK'] = cik_df['CIK'].astype(str).str.zfill(10).astype(int)
 filtered_cik_df = cik_df[cik_df['CIK'].isin(target_ciks)]
 
-ticker_list = "AAPL MSFT AMZN MMM WELL BRK-B JNJ ABT WMT JPM PG ZION UNH HD ACN NVDA ADBE DIS WYNN NFLX INTC KO PEP CVX XOM CSCO ORCL MRK PFE WFC"
-company_names = ['Apple Inc.','Microsoft Corporation','Amazon.com, Inc.', '3M CO','Welltower Inc.',
-                 'Berkshire Hathaway Inc.', 'Johnson & Johnson', 'Abbott Laboratories', 'Walmart Inc.', 'JPMorgan Chase & Co.',
-                 'Procter & Gamble Co.', 'Zions Bancorporation, National Association', 'UnitedHealth Group Incorporated', 'Home Depot, Inc.', 'ACCENTURE PLC',
-                 'NVIDIA Corporation','Adobe Inc.', 'Walt Disney Company', 'Wynn Resorts, Limited', 'Netflix, Inc.',
-                 'Intel Corporation', 'Coca-Cola Company', 'PepsiCo, Inc.', 'Chevron Corporation', 'Exxon Mobil Corporation',
-                 'Cisco Systems, Inc.', 'Oracle Corporation', 'Merck & Co., Inc.', 'Pfizer Inc.', 'Wells Fargo & Company']
+ticker_list = "AAPL ABT ACN ADBE AMZN BRK-B CSCO CVX DIS HD INTC JNJ JPM KO MMM MRK MSFT NFLX NVDA ORCL PEP PFE PG UNH WELL WFC WMT WYNN XOM ZION"
+company_names = ['Apple Inc.', 'Abbott Laboratories', 'ACCENTURE PLC', 'Adobe Inc.', 'Amazon.com Inc.', 
+                 'Berkshire Hathaway Inc.', 'Cisco Systems Inc.', 'Chevron Corporation', 'Walt Disney Company', 'Home Depot Inc.', 
+                 'Intel Corporation', 'Johnson & Johnson', 'JPMorgan Chase & Co.', 'Coca-Cola Company', '3M CO', 
+                 'Merck & Co. Inc.', 'Microsoft Corporation', 'Netflix Inc.', 'NVIDIA Corporation', 'Oracle Corporation', 
+                 'PepsiCo Inc.', 'Pfizer Inc.', 'Procter & Gamble Co.', 'UnitedHealth Group Incorporated', 'Welltower Inc.', 
+                 'Wells Fargo & Company', 'Walmart Inc.', 'Wynn Resorts Limited', 'Exxon Mobil Corporation', 'Zions Bancorporation National Association']
 
 
 # -----------------Tab--------------------------------------------
