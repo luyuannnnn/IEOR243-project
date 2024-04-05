@@ -168,7 +168,7 @@ with tab2:
         
         # present the company with satisfied growth rate
         st.markdown("#### Recommended Company List based on Predicted Growth Rate")
-        growth_rate_threshold = st.number_input('Growth rate (%) of stock price should be equal to or larger than', min_value=0.0, max_value=100.0, value=5.0)/100
+        growth_rate_threshold = st.number_input('Growth rate (%) of stock price should be equal to or larger than', min_value=0.0, max_value=100.0, value=5.0)
         gics_sector_list = last_two_quarter['GICS Sector'].unique()
         gics_sector = st.selectbox('Select GICS Sector', gics_sector_list)
 
