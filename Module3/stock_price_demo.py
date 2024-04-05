@@ -78,7 +78,7 @@ with tab1:
     risk_disclaimer = Modal(title="Welcome to Stock Analysis app!", key="risk_disclaimer", max_width=800)
     if st.session_state.clicked == False:
         with risk_disclaimer.container():
-            st.markdown("Please be aware that predictions are for informational purposes only and should not be considered as investment advice. The stock market can be unpredictable, and predictions may not always be accurate. Before investing, it's important to do your own research and understand the risks involved. Remember that investing in stocks carries the risk of potential loss.")
+            st.markdown("DisclaimerPlease be aware that predictions are for informational purposes only and should not be considered as investment advice. The stock market can be unpredictable, and predictions may not always be accurate. Before investing, it's important to do your own research and understand the risks involved. Remember that investing in stocks carries the risk of potential loss.")
             if st.button("I understand", key="understand", on_click=click_clicked):
                 risk_disclaimer.close()
                 st.experimental_rerun()
