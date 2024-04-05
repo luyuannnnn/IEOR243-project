@@ -17,6 +17,10 @@ target_ciks = [320193, 789019, 1018724, 66740, 766704, 1067983, 200406, 1800, 10
                50863, 21344, 77476, 93410, 34088, 858877, 1341439, 310158, 78003, 72971]
 cik_df['CIK'] = cik_df['CIK'].astype(str).str.zfill(10).astype(int)
 filtered_cik_df = cik_df[cik_df['CIK'].isin(target_ciks)]
+filtered_cik_df = filtered_cik_df.reset_index()
+filtered_cik_df.drop(columns=["Date added"],inplace=True)
+new_row = pd.DataFrame({'Symbol': ["ZION"], 'Security': ["Zions Bancorporation"], "GICS Sector": ["Financials"], "GICS Sub-Industry": ["Regional Banks"], "Headquarters Location": ["Salt Lake City, Utah"], "CIK": [109380], "Founded": ["1873"]})
+filtered_cik_df = pd.concat([filtered_cik_df, new_row], ignore_index=True)
 
 ticker_list = "AAPL ABT ACN ADBE AMZN BRK-B CSCO CVX DIS HD INTC JNJ JPM KO MMM MRK MSFT NFLX NVDA ORCL PEP PFE PG UNH WELL WFC WMT WYNN XOM ZION"
 company_names = ['Apple Inc.', 'Abbott Laboratories', 'ACCENTURE PLC', 'Adobe Inc.', 'Amazon.com Inc.', 
@@ -25,6 +29,12 @@ company_names = ['Apple Inc.', 'Abbott Laboratories', 'ACCENTURE PLC', 'Adobe In
                  'Merck & Co. Inc.', 'Microsoft Corporation', 'Netflix Inc.', 'NVIDIA Corporation', 'Oracle Corporation', 
                  'PepsiCo Inc.', 'Pfizer Inc.', 'Procter & Gamble Co.', 'UnitedHealth Group Incorporated', 'Welltower Inc.', 
                  'Wells Fargo & Company', 'Walmart Inc.', 'Wynn Resorts Limited', 'Exxon Mobil Corporation', 'Zions Bancorporation National Association']
+Ticker_CIKs_mapping = {'AAPL':'320193','MSFT':'789019','AMZN':'1018724','MMM':'66740','WELL':'766704',
+    'BRK-B':'1067983','JNJ':'200406','ABT':'1800','WMT':'104169','JPM':'19617',
+    'PG':'80424','ZION':'109380','UNH':'731766','HD':'354950','ACN':'1467373',
+    'NVDA':'1045810','ADBE':'796343','DIS':'1744489','WYNN':'1174922','NFLX':'1065280',
+    'INTC':'50863','KO':'21344','PEP':'77476','CVX':'93410','XOM':'34088',
+    'CSCO':'858877','ORCL':'1341439','MRK':'310158','PFE':'78003','WFC':'72971'}
 
 
 # -----------------Tab--------------------------------------------
@@ -41,6 +51,19 @@ with st.sidebar:
     for company in company_names:
         if st.sidebar.checkbox(company):
             watchlist.append(company)
+
+    st.markdown("----")
+    
+    st.header('Feedback')
+    feedback = st.text_area("Please enter your feedback or suggestions:", "")
+
+    # Add a submit button
+    if st.button('Submit'):
+        # Handle the submitted feedback
+        if feedback:
+            st.success('Thank you for your feedback! We will carefully consider your suggestions.')
+        else:
+            st.warning('Please enter your feedback before submitting.')
 
        
 
@@ -115,13 +138,93 @@ with tab2:
 
     reco_method = st.radio(
         "Select a method for recommendation",
-        ("Custom Condition", "Automatical Recommendation")
+        ( "Automatical Recommendation", "Custom Condition")
     )
+
+    if reco_method == "Automatical Recommendation":
+
+        stock_price_quarter = yf.download(ticker_list, start="2019-01-01", end = '2023-12-31',interval="3mo")
+        close_stock_price_quarter = stock_price_quarter["Close"]
+        close_stock_price_quarter = close_stock_price_quarter.reset_index(drop=False)
+
+        result = pd.read_csv("/Users/lucia/Desktop/UC Berkeley/[243] Analytics Lab/Project/Module2/svr_result.csv")
+        result_last = result[(result['Year'] == 2023) & (result['Quarter'] == 'Q4')]
+        result_last['2024-01-01'] = np.exp(result_last["LogClosePriceNextQuarter"])
+        result_last = result_last.set_index('Ticker')
+        result_last = result_last.transpose().rename_axis('Date').iloc[-1:]
+        result_last = result_last.reset_index(drop=False)
+        close_stock_price_pred = pd.concat([close_stock_price_quarter, result_last])
+        close_stock_price_pred = close_stock_price_pred.set_index('Date') 
+
+        # calculate growth rate of the last two months
+        last_two_quarter = close_stock_price_pred.tail(2)
+        last_two_quarter = last_two_quarter.transpose()
+        last_two_quarter = last_two_quarter.reset_index()
+        last_two_quarter["Growth Rate"] = (last_two_quarter.iloc[:,-1] - last_two_quarter.iloc[:,-2])/last_two_quarter.iloc[:,-2]
+        last_two_quarter['CIKs'] = last_two_quarter['Ticker'].map(Ticker_CIKs_mapping)
+        last_two_quarter['CIKs'] = last_two_quarter['CIKs'].astype('int')
+        last_two_quarter = pd.merge(last_two_quarter, filtered_cik_df , left_on=['CIKs'], right_on = ['CIK'], how='left')
+
+        
+        # present the company with satisfied growth rate
+        st.markdown("#### Recommended Company List based on Predicted Growth Rate")
+        growth_rate_threshold = st.number_input('Growth rate (%) of stock price should be equal to or larger than', min_value=0.0, max_value=100.0, value=5.0)/100
+        gics_sector_list = last_two_quarter['GICS Sector'].unique()
+        gics_sector = st.selectbox('Select GICS Sector', gics_sector_list)
+
+        filtered_data = last_two_quarter[(last_two_quarter['Growth Rate'] >= growth_rate_threshold / 100) & (last_two_quarter['GICS Sector'] == gics_sector)]
+        filtered_data = filtered_data.sort_values(by='Growth Rate', ascending=False)
+        filtered_data = filtered_data.set_index('Ticker')
+        filtered_data['Growth Rate'] = filtered_data['Growth Rate'].map(lambda x: "{:.2%}".format(x))
+        features = ['Security', 'Growth Rate','GICS Sector','GICS Sub-Industry', 'Headquarters Location','CIK', 'Founded']
+        output_data = filtered_data[features]
+        st.write(output_data)
+
+
+        st.markdown("----")
+
+        st.markdown("#### Stock Performance Prediction by Quarter")
+        st.markdown("*Note: The red point in the following graph is the prediction based on model.*")
+
+        close_stock_price_pred.columns = company_names
+
+        # Create date slider
+        date_range_indices = np.arange(len(close_stock_price_pred))
+        # Create dropdown for company selection
+        company_dropdown = st.selectbox("Select a company", close_stock_price_pred.columns,key="company_dropdown2")
+
+        def plot_stock_price_with_progress(company):
+            # Get the subset of data for the specified company
+            subset = close_stock_price_pred
+            subset.index = pd.to_datetime(subset.index)
+
+            # Create a progress bar
+            progress_bar = st.progress(0)
+
+            # Plotting
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.plot(subset.index, subset[company], marker='o', label=f'{company} Stock Price by Quarter')
+            # Add the last point and mark it as red
+            last_date = subset.index[-1]
+            last_price = subset[company].iloc[-1]
+            ax.plot(last_date, last_price, marker='o', markersize=8, color='red')
+            # Add labels and legend
+            ax.set_title(f'Stock Price Prediction for {company}')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Close Stock Price')
+            ax.tick_params(axis='x', rotation=45)
+            ax.legend()
+
+            st.pyplot(fig)
+            progress_bar.progress(100)
+
+        plot_stock_price_with_progress(company_dropdown)
+
 
     if reco_method == "Custom Condition":
 
         # input data of indicator 
-        indicator = pd.read_csv("Module3/stock_price_prediction_data.csv")
+        indicator = pd.read_csv("/Users/lucia/Desktop/UC Berkeley/[243] Analytics Lab/Project/Module2/stock_price_prediction_data.csv")
         indicator['Date'] = indicator.apply(lambda row: f"{row['Year']}-{row['Quarter']}", axis=1)
         indicator['Date'] = pd.to_datetime(indicator['Date'])
         indicator.drop(['Year', 'Quarter','YearNext', 'QuarterNext'], axis=1, inplace=True)
@@ -190,64 +293,6 @@ with tab2:
             st.write("No company satisfies this condition.")
             
     
-    if reco_method == "Automatical Recommendation":
-        st.markdown("#### Stock Performance Prediction by Quarter")
-        st.markdown("*Note: The red point in the following graph is the prediction based on model.*")
-
-        stock_price_quarter = yf.download(ticker_list, start="2019-01-01", end = '2023-12-31',interval="3mo")
-        close_stock_price_quarter = stock_price_quarter["Close"]
-        close_stock_price_quarter = close_stock_price_quarter.reset_index(drop=False)
-
-        result = pd.read_csv("Module3/svr_result.csv")
-        result_last = result[(result['Year'] == 2023) & (result['Quarter'] == 'Q4')]
-        result_last['2024-01-01'] = np.exp(result_last["LogClosePriceNextQuarter"])
-        result_last = result_last.set_index('Ticker')
-        result_last = result_last.transpose().rename_axis('Date').iloc[-1:]
-        result_last = result_last.reset_index(drop=False)
-        close_stock_price_pred = pd.concat([close_stock_price_quarter, result_last])
-        close_stock_price_pred = close_stock_price_pred.set_index('Date') 
-
-        close_stock_price_pred.columns = company_names
-
-        # Create date slider
-        date_range_indices = np.arange(len(close_stock_price_pred))
-
-        # Create dropdown for company selection
-        company_dropdown = st.selectbox("Select a company", close_stock_price_pred.columns,key="company_dropdown2")
-
-
-        def plot_stock_price_with_progress(company):
-            # Get the subset of data for the specified company
-            subset = close_stock_price_pred
-            subset.index = pd.to_datetime(subset.index)
-
-            # Create a progress bar
-            progress_bar = st.progress(0)
-
-            # Plotting
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(subset.index, subset[company], marker='o', label=f'{company} Stock Price by Quarter')
-
-            # Add the last point and mark it as red
-            last_date = subset.index[-1]
-            last_price = subset[company].iloc[-1]
-            ax.plot(last_date, last_price, marker='o', markersize=8, color='red')
-
-            # Add labels and legend
-            ax.set_title(f'Stock Price Prediction for {company}')
-            ax.set_xlabel('Date')
-            ax.set_ylabel('Close Stock Price')
-            ax.tick_params(axis='x', rotation=45)
-            ax.legend()
-
-            # Show plot
-            st.pyplot(fig)
-
-            # Update progress bar to 100% when plotting is done
-            progress_bar.progress(100)
-
-        plot_stock_price_with_progress(company_dropdown)
-
 
 # -----------------Part3 Stock Monitoring ------------------------------------
 with tab3:
