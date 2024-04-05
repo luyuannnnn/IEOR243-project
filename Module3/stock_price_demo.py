@@ -147,7 +147,7 @@ with tab2:
         close_stock_price_quarter = stock_price_quarter["Close"]
         close_stock_price_quarter = close_stock_price_quarter.reset_index(drop=False)
 
-        result = pd.read_csv("svr_result.csv")
+        result = pd.read_csv("Module3/svr_result.csv")
         result_last = result[(result['Year'] == 2023) & (result['Quarter'] == 'Q4')]
         result_last['2024-01-01'] = np.exp(result_last["LogClosePriceNextQuarter"])
         result_last = result_last.set_index('Ticker')
@@ -224,7 +224,7 @@ with tab2:
     if reco_method == "Custom Condition":
 
         # input data of indicator 
-        indicator = pd.read_csv("stock_price_prediction_data.csv")
+        indicator = pd.read_csv("Module3/stock_price_prediction_data.csv")
         indicator['Date'] = indicator.apply(lambda row: f"{row['Year']}-{row['Quarter']}", axis=1)
         indicator['Date'] = pd.to_datetime(indicator['Date'])
         indicator.drop(['Year', 'Quarter','YearNext', 'QuarterNext'], axis=1, inplace=True)
